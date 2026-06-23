@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Sistem Penilaian Siswa - SMART Method</title>
     
@@ -14,30 +14,40 @@
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     
     <style>
+        /* ========================================
+           RESET & DASAR
+           ======================================== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        body {
+        html, body {
+            height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
             font-size: 14px;
             background: #f5f7fa;
+            overflow-x: hidden;
         }
         
+        /* ========================================
+           WRAPPER - FLEX CONTAINER
+           ======================================== */
         .wrapper {
             display: flex;
             width: 100%;
-            align-items: stretch;
             min-height: 100vh;
+            position: relative;
         }
         
-        /* Sidebar Styles - Fix tinggi dan posisi logout */
+        /* ========================================
+           SIDEBAR
+           ======================================== */
         .sidebar {
             width: 250px;
             min-width: 250px;
+            max-width: 250px;
             background: linear-gradient(135deg, #2d3e50 0%, #1a2a3a 100%);
             color: #e8edf2;
             transition: all 0.3s ease-in-out;
@@ -45,31 +55,23 @@
             left: 0;
             top: 0;
             bottom: 0;
-            z-index: 1000;
+            z-index: 1050;
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow-y: auto;
+            overflow-x: hidden;
         }
         
-        /* Desktop: sidebar selalu terbuka */
-        @media (min-width: 769px) {
-            .sidebar {
-                margin-left: 0 !important;
-            }
-            .sidebar.active {
-                margin-left: -250px !important;
-            }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
         }
-        
-        /* Mobile: sidebar tertutup default */
-        @media (max-width: 768px) {
-            .sidebar {
-                margin-left: -250px;
-            }
-            .sidebar.active {
-                margin-left: 0;
-            }
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
         }
         
         .sidebar .sidebar-header {
@@ -92,26 +94,11 @@
             font-size: 11px;
         }
         
-        /* Nav menu - scrollable area */
         .sidebar-nav {
             flex: 1;
             padding: 10px 15px;
             overflow-y: auto;
             overflow-x: hidden;
-        }
-        
-        /* Custom scrollbar untuk nav menu */
-        .sidebar-nav::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        .sidebar-nav::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
         }
         
         .sidebar .nav-link {
@@ -143,7 +130,6 @@
             font-size: 0.9rem;
         }
         
-        /* Logout button - FIXED di bagian bawah sidebar */
         .sidebar-footer {
             flex-shrink: 0;
             padding: 15px;
@@ -181,46 +167,27 @@
             color: #f87171;
         }
         
+        /* ========================================
+           CONTENT UTAMA
+           ======================================== */
         .content {
             flex: 1;
-            transition: all 0.3s ease-in-out;
             min-height: 100vh;
+            transition: all 0.3s ease-in-out;
             margin-left: 250px;
+            width: calc(100% - 250px);
         }
         
-        /* Desktop */
-        @media (min-width: 769px) {
-            .content {
-                margin-left: 250px;
-            }
-            .content.active {
-                margin-left: 0;
-            }
-        }
-        
-        /* Mobile */
-        @media (max-width: 768px) {
-            .content {
-                margin-left: 0;
-            }
-            .content.active {
-                margin-left: 250px;
-            }
-        }
-        
-        .main-content {
-            background: #f0f4f8;
-            min-height: calc(100vh - 60px);
-            padding: 20px !important;
-        }
-        
+        /* ========================================
+           NAVBAR ATAS
+           ======================================== */
         .navbar-top {
             background: #ffffff;
             box-shadow: 0 2px 12px rgba(0,0,0,0.04);
             padding: 12px 20px;
             position: sticky;
             top: 0;
-            z-index: 999;
+            z-index: 1040;
             border-bottom: 1px solid #e9ecef;
         }
         
@@ -248,12 +215,392 @@
             color: #2c3e50;
         }
         
+        .main-content {
+            background: #f0f4f8;
+            min-height: calc(100vh - 60px);
+            padding: 20px;
+        }
+        
+        /* ========================================
+           OVERLAY (Untuk Mobile)
+           ======================================== */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1045;
+            cursor: pointer;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        /* ========================================
+           RESPONSIF: DESKTOP (>= 769px)
+           ======================================== */
+        @media (min-width: 769px) {
+            .sidebar {
+                margin-left: 0 !important;
+            }
+            
+            .sidebar.active {
+                margin-left: -250px !important;
+            }
+            
+            .content {
+                margin-left: 250px;
+                width: calc(100% - 250px);
+            }
+            
+            .content.active {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .overlay {
+                display: none !important;
+            }
+        }
+        
+        /* ========================================
+           RESPONSIF: MOBILE (<= 768px)
+           ======================================== */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+                width: 250px;
+                min-width: 250px;
+                max-width: 250px;
+            }
+            
+            .sidebar.active {
+                margin-left: 0;
+            }
+            
+            .content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .content.active {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .main-content {
+                padding: 12px !important;
+            }
+            
+            .navbar-top {
+                padding: 8px 12px !important;
+            }
+            
+            .navbar-top h5 {
+                font-size: 11px !important;
+                margin-left: 8px !important;
+                max-width: 120px;
+            }
+            
+            #sidebarCollapse {
+                padding: 5px 10px !important;
+                font-size: 0.8rem !important;
+            }
+            
+            h2 {
+                font-size: 1.1rem !important;
+            }
+            h3 {
+                font-size: 1rem !important;
+            }
+            h4 {
+                font-size: 0.9rem !important;
+            }
+            h5 {
+                font-size: 0.8rem !important;
+            }
+            
+            .card-body {
+                padding: 12px !important;
+            }
+            
+            .card-header {
+                padding: 8px 12px !important;
+            }
+            
+            .card-header h5 {
+                font-size: 0.75rem !important;
+            }
+            
+            .form-control {
+                font-size: 0.75rem !important;
+                padding: 0.4rem 0.7rem !important;
+                height: auto !important;
+            }
+            
+            .form-group {
+                margin-bottom: 0.8rem !important;
+            }
+            
+            .form-group label {
+                font-size: 0.7rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+            
+            .col-form-label {
+                font-size: 0.7rem !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }
+            
+            .btn {
+                font-size: 0.7rem !important;
+                padding: 5px 10px !important;
+                border-radius: 6px !important;
+            }
+            
+            .btn-sm {
+                font-size: 0.6rem !important;
+                padding: 3px 6px !important;
+            }
+            
+            .btn-group .btn {
+                font-size: 0.6rem !important;
+                padding: 3px 6px !important;
+            }
+            
+            .table {
+                font-size: 0.65rem !important;
+            }
+            
+            .table th,
+            .table td {
+                padding: 4px 6px !important;
+                font-size: 0.65rem !important;
+            }
+            
+            .table .btn-sm {
+                padding: 2px 5px !important;
+                font-size: 0.55rem !important;
+            }
+            
+            .badge {
+                font-size: 0.55rem !important;
+                padding: 2px 6px !important;
+            }
+            
+            .badge-pill {
+                padding: 3px 8px !important;
+            }
+            
+            .alert {
+                font-size: 0.7rem !important;
+                padding: 0.5rem 0.8rem !important;
+            }
+            
+            .card-stats .card-body {
+                padding: 10px !important;
+            }
+            
+            .card-stats h2 {
+                font-size: 1.1rem !important;
+            }
+            
+            .card-stats h3 {
+                font-size: 1rem !important;
+            }
+            
+            .card-stats h6 {
+                font-size: 0.55rem !important;
+            }
+            
+            .card-stats i {
+                font-size: 1.2rem !important;
+            }
+            
+            .progress {
+                height: 16px !important;
+            }
+            
+            .progress-bar {
+                font-size: 0.6rem !important;
+                line-height: 16px !important;
+            }
+            
+            .select2-container .select2-selection--single {
+                height: auto !important;
+                padding: 4px 8px !important;
+            }
+            
+            .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+                font-size: 0.75rem !important;
+                padding-left: 8px !important;
+            }
+            
+            .custom-control-label {
+                font-size: 0.7rem !important;
+                padding-left: 5px !important;
+            }
+            
+            .custom-control {
+                padding-left: 1.5rem !important;
+                margin-right: 5px !important;
+            }
+        }
+        
+        /* ========================================
+           RESPONSIF: MOBILE KECIL (<= 576px)
+           ======================================== */
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 8px !important;
+            }
+            
+            .container-fluid {
+                padding-left: 8px !important;
+                padding-right: 8px !important;
+            }
+            
+            .row {
+                margin-left: -4px !important;
+                margin-right: -4px !important;
+            }
+            
+            .col-6, .col-sm-6, .col-md-3, .col-md-4, .col-md-6 {
+                padding-left: 4px !important;
+                padding-right: 4px !important;
+            }
+            
+            .navbar-top h5 {
+                max-width: 80px;
+                font-size: 10px !important;
+            }
+            
+            .radio-group .custom-control {
+                flex: 0 0 calc(50% - 6px);
+                margin-right: 0;
+                margin-bottom: 4px;
+            }
+            
+            .radio-group .custom-control-label {
+                font-size: 0.65rem !important;
+            }
+            
+            .table th,
+            .table td {
+                padding: 3px 4px !important;
+                font-size: 0.6rem !important;
+            }
+            
+            .table .btn-sm {
+                padding: 1px 4px !important;
+                font-size: 0.5rem !important;
+            }
+            
+            .table .btn-sm i {
+                font-size: 0.5rem !important;
+            }
+            
+            .btn-group .btn {
+                font-size: 0.55rem !important;
+                padding: 2px 5px !important;
+            }
+            
+            .card-stats h2 {
+                font-size: 0.95rem !important;
+            }
+            
+            .card-stats h3 {
+                font-size: 0.85rem !important;
+            }
+            
+            .card-stats i {
+                font-size: 1rem !important;
+            }
+            
+            h2 {
+                font-size: 0.95rem !important;
+            }
+        }
+        
+        /* ========================================
+           RESPONSIF: TABLET (769px - 1024px)
+           ======================================== */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .main-content {
+                padding: 15px !important;
+            }
+            
+            .card-stats h2 {
+                font-size: 1.3rem !important;
+            }
+            
+            .card-stats h3 {
+                font-size: 1.1rem !important;
+            }
+        }
+        
+        /* ========================================
+           UTILITY: TABLE WRAPPER
+           ======================================== */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            margin-bottom: 0;
+        }
+        
+        .table-wrapper table {
+            min-width: 600px;
+            width: 100%;
+            margin-bottom: 0;
+        }
+        
+        .table-wrapper table th,
+        .table-wrapper table td {
+            white-space: nowrap;
+        }
+        
+        /* ========================================
+           UTILITY: RADIO GROUP
+           ======================================== */
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .radio-group .custom-control {
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 576px) {
+            .radio-group .custom-control {
+                flex: 0 0 calc(50% - 6px);
+                margin-right: 0;
+                margin-bottom: 4px;
+            }
+            
+            .radio-group .custom-control-label {
+                font-size: 0.65rem !important;
+            }
+        }
+        
+        /* ========================================
+           UTILITY: CARD STATS
+           ======================================== */
         .card-stats {
-            border-radius: 16px;
+            border-radius: 12px;
             border: none;
             transition: all 0.3s;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             background: #ffffff;
+            height: 100%;
         }
         
         .card-stats:hover {
@@ -266,266 +613,109 @@
         }
         
         .card-stats h6 {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             margin-bottom: 0;
             letter-spacing: 0.5px;
             font-weight: 600;
+            text-transform: uppercase;
         }
         
         .card-stats h2 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
+            margin-bottom: 0;
+            font-weight: 700;
+        }
+        
+        .card-stats h3 {
+            font-size: 1.3rem;
             margin-bottom: 0;
             font-weight: 700;
         }
         
         .card-stats i {
-            font-size: 2rem;
+            font-size: 1.8rem;
             opacity: 0.8;
         }
         
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: 999;
-            cursor: pointer;
-        }
-        
-        .overlay.active {
-            display: block;
-        }
-        
-        @media (min-width: 769px) {
-            .overlay {
+        /* ========================================
+           PRINT STYLES
+           ======================================== */
+        @media print {
+            .sidebar,
+            .navbar-top,
+            .btn,
+            .btn-group,
+            .no-print,
+            #sidebarCollapse {
                 display: none !important;
             }
-        }
-        
-        .btn-primary {
-            background: #4a6fa5;
-            border: none;
-            border-radius: 10px;
-            padding: 8px 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary:hover {
-            background: #3a5a8c;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(74,111,165,0.3);
-        }
-        
-        .btn-warning {
-            background: #f5b042;
-            border: none;
-            border-radius: 10px;
-            padding: 6px 16px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background: #e5a032;
-            transform: translateY(-1px);
-        }
-        
-        .btn-secondary {
-            background: #94a3b8;
-            border: none;
-            border-radius: 10px;
-            padding: 6px 16px;
-            font-size: 0.8rem;
-        }
-        
-        .alert {
-            border-radius: 12px;
-            animation: slideDown 0.4s ease-out;
-            padding: 0.85rem 1.25rem;
-            font-size: 0.85rem;
-            border: none;
-        }
-        
-        .alert-success {
-            background: #e6f7ec;
-            color: #1e6f3f;
-        }
-        
-        .alert-danger {
-            background: #ffe8e8;
-            color: #a03a3a;
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
+            
+            .content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .form-control {
-            font-size: 0.85rem;
-            padding: 0.6rem 0.9rem;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
-            transition: all 0.3s;
-        }
-        
-        .form-control:focus {
-            border-color: #4a6fa5;
-            box-shadow: 0 0 0 3px rgba(74,111,165,0.15);
-            outline: none;
-        }
-        
-        .form-group label {
-            font-size: 0.8rem;
-            margin-bottom: 0.35rem;
-            font-weight: 500;
-            color: #334155;
-        }
-        
-        .modal-content {
-            border-radius: 16px;
-            border: none;
-        }
-        
-        .modal-header {
-            padding: 1rem 1.25rem;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .modal-footer {
-            background: #f8fafc;
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        .badge-primary {
-            background: #e8f0fe;
-            color: #1e3a5f;
-            padding: 0.35rem 0.75rem;
-            font-size: 0.7rem;
-            font-weight: 500;
-            border-radius: 20px;
-        }
-        
-        .badge-success {
-            background: #e6f7ec;
-            color: #1e6f3f;
-        }
-        
-        .text-success {
-            color: #2d6a4f !important;
-        }
-        
-        .text-warning {
-            color: #b45309 !important;
-        }
-        
-        .text-danger {
-            color: #c0392b !important;
-        }
-        
-        @media (max-width: 768px) {
+            
             .main-content {
-                padding: 15px !important;
+                padding: 20px !important;
+                background: white !important;
             }
             
-            .table-responsive {
-                font-size: 12px;
+            .card {
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
             }
             
-            .btn-sm {
-                padding: 4px 10px;
-                font-size: 10px;
+            .card-stats {
+                border: 1px solid #ddd !important;
             }
             
-            .card-body {
-                padding: 15px;
-            }
-            
-            .navbar-top h5 {
-                font-size: 12px;
-            }
-            
-            .card-stats h2 {
-                font-size: 1.3rem;
-            }
-            
-            .card-stats i {
-                font-size: 1.5rem;
-            }
-        }
-        
-        @media (min-width: 1200px) {
-            .main-content {
-                padding: 25px !important;
-            }
-            
-            .card-stats h2 {
-                font-size: 2rem;
+            .table-wrapper {
+                overflow: visible !important;
             }
         }
     </style>
 </head>
 <body>
     <div class="wrapper">
-        <div class="overlay"></div>
+        <div class="overlay" id="overlay"></div>
         
-        <!-- Sidebar dengan struktur flex column -->
-        <div class="sidebar">
-            <!-- Header - tetap di atas -->
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h5><i class="fas fa-trophy"></i> SPK SMART</h5>
                 <small>MIN 3 Tangerang</small>
             </div>
             
-  <div class="sidebar-nav">
-    <nav class="nav flex-column">
-        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-            <i class="fas fa-tachometer-alt"></i> Dashboard
-        </a>
-        <a class="nav-link {{ request()->routeIs('alternatif.*') ? 'active' : '' }}" href="{{ route('alternatif.index') }}">
-            <i class="fas fa-users"></i> Data Siswa
-        </a>
-        
-        {{-- MENU ABSENSI - SEMUA USER BISA AKSES --}}
-        <a class="nav-link {{ request()->routeIs('absensi.*') ? 'active' : '' }}" href="{{ route('absensi.index') }}">
-            <i class="fas fa-calendar-check"></i> Absensi
-        </a>
-        
-        {{-- MENU KRITERIA - SEMUA USER BISA LIHAT --}}
-        <a class="nav-link {{ request()->routeIs('kriteria.*') ? 'active' : '' }}" href="{{ route('kriteria.index') }}">
-            <i class="fas fa-list"></i> Kriteria
-        </a>
-        
-        <a class="nav-link {{ request()->routeIs('penilaian.*') ? 'active' : '' }}" href="{{ route('penilaian.index') }}">
-            <i class="fas fa-star"></i> Penilaian
-        </a>
-        <a class="nav-link {{ request()->routeIs('rangking.*') ? 'active' : '' }}" href="{{ route('rangking.index') }}">
-            <i class="fas fa-trophy"></i> Rangking
-        </a>
-        <a class="nav-link {{ request()->routeIs('laporan.*') ? 'active' : '' }}" href="{{ route('laporan.index') }}">
-            <i class="fas fa-file-pdf"></i> Laporan
-        </a>
-        <a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.index') }}">
-            <i class="fas fa-user-cog"></i> Pengaturan
-        </a>
-    </nav>
-</div>
+            <div class="sidebar-nav">
+                <nav class="nav flex-column">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('alternatif.*') ? 'active' : '' }}" href="{{ route('alternatif.index') }}">
+                        <i class="fas fa-users"></i> Data Siswa
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('absensi.*') ? 'active' : '' }}" href="{{ route('absensi.index') }}">
+                        <i class="fas fa-calendar-check"></i> Absensi
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('kriteria.*') ? 'active' : '' }}" href="{{ route('kriteria.index') }}">
+                        <i class="fas fa-list"></i> Kriteria
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('penilaian.*') ? 'active' : '' }}" href="{{ route('penilaian.index') }}">
+                        <i class="fas fa-star"></i> Penilaian
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('rangking.*') ? 'active' : '' }}" href="{{ route('rangking.index') }}">
+                        <i class="fas fa-trophy"></i> Rangking
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('laporan.*') ? 'active' : '' }}" href="{{ route('laporan.index') }}">
+                        <i class="fas fa-file-pdf"></i> Laporan
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.index') }}">
+                        <i class="fas fa-user-cog"></i> Pengaturan
+                    </a>
+                </nav>
+            </div>
             
-            <!-- Footer dengan Logout - SELALU TERLIHAT DI BAWAH -->
             <div class="sidebar-footer">
                 <div class="logout-btn">
                     <form method="POST" action="{{ route('logout') }}">
@@ -539,20 +729,22 @@
         </div>
         
         <!-- Page Content -->
-        <div class="content">
+        <div class="content" id="content">
             <nav class="navbar-top d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" style="min-width: 0; flex: 1 1 auto;">
                     <button type="button" id="sidebarCollapse" class="btn">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h5 class="mb-0 ml-3">Selamat Datang, {{ auth()->user()->name ?? 'Guest' }}</h5>
+                    <h5 class="mb-0 ml-3" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">
+                        Selamat Datang, {{ auth()->user()->name ?? 'Guest' }}
+                    </h5>
                 </div>
-                <div class="d-flex align-items-center">
-                <span class="badge badge-primary mr-3">
-                    {{ auth()->user() && auth()->user()->role == 'admin' ? 'Administrator' : 'Guru' }}
-                </span>
-                <i class="fas fa-user-circle fa-2x text-secondary" style="color: #94a3b8 !important;"></i>
-            </div>
+                <div class="d-flex align-items-center" style="flex-shrink: 0;">
+                    <span class="badge badge-primary mr-3 d-none d-sm-inline-block">
+                        {{ auth()->user() && auth()->user()->role == 'admin' ? 'Administrator' : 'Guru' }}
+                    </span>
+                    <i class="fas fa-user-circle fa-2x text-secondary" style="color: #94a3b8 !important;"></i>
+                </div>
             </nav>
             
             <div class="main-content">
@@ -600,95 +792,85 @@
     
     <script>
         $(document).ready(function() {
+            var sidebar = $('#sidebar');
+            var content = $('#content');
+            var overlay = $('#overlay');
+            
             function isMobile() {
                 return $(window).width() <= 768;
             }
             
-            function updateOverlay() {
-                var isSidebarOpen = !$('.sidebar').hasClass('active');
-                var mobile = isMobile();
-                
-                if (mobile && isSidebarOpen) {
-                    $('.overlay').addClass('active');
+            function toggleSidebar(show) {
+                if (show === undefined) {
+                    sidebar.toggleClass('active');
+                    content.toggleClass('active');
+                    overlay.toggleClass('active');
+                } else if (show) {
+                    sidebar.addClass('active');
+                    content.addClass('active');
+                    overlay.addClass('active');
                 } else {
-                    $('.overlay').removeClass('active');
+                    sidebar.removeClass('active');
+                    content.removeClass('active');
+                    overlay.removeClass('active');
                 }
+                
+                var isOpen = !sidebar.hasClass('active');
+                localStorage.setItem('sidebarState', isOpen ? 'open' : 'closed');
             }
             
             $('#sidebarCollapse').on('click', function() {
-                $('.sidebar').toggleClass('active');
-                $('.content').toggleClass('active');
-                
-                if ($('.sidebar').hasClass('active')) {
-                    localStorage.setItem('sidebarState', 'closed');
-                } else {
-                    localStorage.setItem('sidebarState', 'open');
+                toggleSidebar();
+            });
+            
+            overlay.on('click', function() {
+                if (isMobile()) {
+                    toggleSidebar(false);
                 }
-                
-                updateOverlay();
             });
             
             function loadSavedState() {
                 var savedState = localStorage.getItem('sidebarState');
-                var isDesktop = !isMobile();
+                var mobile = isMobile();
                 
-                if (isDesktop) {
-                    if (savedState === 'closed') {
-                        $('.sidebar').addClass('active');
-                        $('.content').addClass('active');
+                if (mobile) {
+                    if (savedState === 'open') {
+                        toggleSidebar(true);
                     } else {
-                        $('.sidebar').removeClass('active');
-                        $('.content').removeClass('active');
+                        toggleSidebar(false);
                     }
                 } else {
                     if (savedState === 'closed') {
-                        $('.sidebar').addClass('active');
-                        $('.content').addClass('active');
+                        toggleSidebar(false);
                     } else {
-                        $('.sidebar').removeClass('active');
-                        $('.content').removeClass('active');
+                        toggleSidebar(true);
                     }
                 }
-                
-                updateOverlay();
             }
             
-            $('.overlay').on('click', function() {
-                if (isMobile()) {
-                    $('.sidebar').addClass('active');
-                    $('.content').addClass('active');
-                    localStorage.setItem('sidebarState', 'closed');
-                    updateOverlay();
-                }
-            });
-            
-            function handleResize() {
-                var wasMobile = isMobile();
-                var nowMobile = $(window).width() <= 768;
-                
-                if (wasMobile !== nowMobile) {
-                    if (nowMobile) {
-                        $('.sidebar').addClass('active');
-                        $('.content').addClass('active');
-                        localStorage.setItem('sidebarState', 'closed');
-                    } else {
-                        $('.sidebar').removeClass('active');
-                        $('.content').removeClass('active');
-                        localStorage.setItem('sidebarState', 'open');
-                    }
-                }
-                
-                updateOverlay();
-            }
-            
+            var resizeTimer;
             $(window).on('resize', function() {
-                handleResize();
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    var mobile = isMobile();
+                    var isOpen = !sidebar.hasClass('active');
+                    
+                    if (mobile) {
+                        if (isOpen) {
+                            toggleSidebar(false);
+                        }
+                    } else {
+                        if (!isOpen) {
+                            toggleSidebar(true);
+                        }
+                    }
+                }, 200);
             });
             
             $(document).on('keydown', function(e) {
                 if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
                     e.preventDefault();
-                    $('#sidebarCollapse').click();
+                    toggleSidebar();
                 }
             });
             
@@ -702,8 +884,12 @@
                                 "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json"
                             },
                             "pageLength": 10,
-                            "responsive": true,
-                            "autoWidth": false
+                            "responsive": false,
+                            "autoWidth": false,
+                            "scrollX": true,
+                            "columnDefs": [
+                                { "orderable": false, "targets": 'no-sort' }
+                            ]
                         });
                     }
                 });
